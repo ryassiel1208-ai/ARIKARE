@@ -1,0 +1,17 @@
+HIMNARIO NGÄBERE - proyecto para generar el APK (sin internet al usarlo)
+
+OPCION 1: sin instalar nada (GitHub genera el APK)
+1. Crea cuenta gratis en https://github.com y un repositorio nuevo (ej. himnario-ngabere).
+2. Sube TODO el contenido de esta carpeta (incluida la carpeta oculta .github). En la web: Add file > Upload files.
+3. Pestaña Actions > "Construir APK" > Run workflow. Tarda 5-10 minutos.
+4. Al terminar, entra a la ejecución y descarga el archivo himnario-ngabere-apk (zip con app-debug.apk).
+5. Pasa el APK al teléfono y permite instalar de fuentes desconocidas.
+
+OPCION 2: en tu computador (Node.js + Android Studio)
+  npm install
+  npx cap add android
+  npx cap sync android
+  npx cap open android
+En Android Studio: Build > Build Bundle(s)/APK(s) > Build APK(s).
+
+Para cambiar himnos: edita www/index.html (o agrégalos desde Admin dentro de la app) y vuelve a construir.
