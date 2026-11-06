@@ -8,19 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        variante: [lector, editor]
+        variante: [lector, admin]
     steps:
       - uses: actions/checkout@v4
-      - name: Preparar www
-        run: |
-          mkdir -p www
-          cp index.html manifest.webmanifest icon-192.png icon-512.png www/
-          if [ "${{ matrix.variante }}" = "lector" ]; then
-            sed -i 's#/\*MODO\*/false#true#' www/index.html
-          else
-            sed -i 's#"appId": "[^"]*"#"appId": "com.ngabere.himnario.editor"#; s#"appName": "[^"]*"#"appName": "Himnario Editor"#' capacitor.config.json
-          fi
-          grep -n "const MODO_LECTOR" www/index.html
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -28,18 +18,24 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - run: npm install
+      - name: Preparar app (pagina, nombre e iconos)
+        env:
+          VARIANTE: ${{ matrix.variante }}
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 construir.py
+      - run: npm install @capacitor/app@6 @capacitor/share@6 @capacitor/filesystem@6 @capacitor/status-bar@6
       - run: npx cap add android
       - name: Generar iconos
         continue-on-error: true
         run: |
           npm install --no-save @capacitor/assets@3
-          npx capacitor-assets generate --android --iconBackgroundColor '#7a1f2b' --iconBackgroundColorDark '#7a1f2b'
+          npx capacitor-assets generate --android
       - run: npx cap sync android
       - run: |
           chmod +x android/gradlew
           cd android && ./gradlew assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: himnario-ngabere-${{ matrix.variante }}-apk
+          name: ka-ngabere-${{ matrix.variante }}-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
