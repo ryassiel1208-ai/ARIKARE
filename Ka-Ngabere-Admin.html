@@ -236,7 +236,6 @@ function fill() {
         const datos = searchData(h);
         const es = datos.espanol;
         const titulo = datos.ngabere;
-        const info = String(h.i || '').trim();
 
         return `
           <div class="item" data-n="${esc(h.n)}">
@@ -253,12 +252,6 @@ function fill() {
               ${es ? `
                 <div class="songspanish">
                   Español: ${esc(es)}
-                </div>
-              ` : ''}
-
-              ${info ? `
-                <div class="songinfo">
-                  ♫ ${esc(info)}
                 </div>
               ` : ''}
 
