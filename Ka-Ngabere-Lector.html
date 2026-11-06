@@ -54,8 +54,157 @@ let H=ADMIN?(ld('h',null)||HIMNOS):HIMNOS, F=new Set(ld('f',[])), R=ld('r',[]), 
 let tab='all', q='', cur=null, edit=null;
 const save=()=>{if(ADMIN)sv('h',H);sv('f',[...F]);sv('r',R);sv('s',S)};
 const applyS=()=>{const r=document.documentElement;r.style.setProperty('--fs',S.fs+'px');S.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',S.theme)};
-const byN=n=>H.find(h=>h.n==n);
-function list(){
+// ============================================
+// BUSCADOR BILINGÜE NGÄBERE - ESPAÑOL
+// ============================================
+
+// Buscar un himno por su número
+const byN = n => H.find(h => h.n == n);
+
+// Extraer el título español del título original.
+// Admite nombres entre paréntesis o corchetes.
+function spanishTitle(h) {
+  const titulo = String(h.t || "");
+
+  const coincidencias = titulo.match(
+    /\([^()]+\)|\[[^\[\]]+\]/g
+  );
+
+  if (coincidencias) {
+    return coincidencias
+      .map(x => x.slice(1, -1).trim())
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  // Compatibilidad con futuras versiones del JSON
+  return String(
+    h.es || h.espanol || h.titulo_espanol || ""
+  ).trim();
+}
+
+// Obtener el título Ngäbere sin la traducción española
+function ngabereTitle(h) {
+  return String(h.t || "")
+    .replace(/\([^()]*\)|\[[^\[\]]*\]/g, "")
+    .trim();
+}
+
+// Normalizar palabras para facilitar la búsqueda
+// Utiliza la función norm() que ya existe en el HTML.
+const searchCache = new WeakMap();
+
+function searchData(h) {
+  if (searchCache.has(h)) {
+    return searchCache.get(h);
+  }
+
+  const datos = {
+    ngabere: ngabereTitle(h),
+    espanol: spanishTitle(h),
+    numero: String(h.n ?? ""),
+    texto: norm([
+      h.n,
+      h.t,
+      ngabereTitle(h),
+      spanishTitle(h),
+      h.i,
+      h.es,
+      h.espanol,
+      h.titulo_espanol
+    ].filter(Boolean).join(" "))
+  };
+
+  searchCache.set(h, datos);
+  return datos;
+}
+
+// Construir la lista de himnos según la búsqueda
+function list() {
+  let resultados = [...H];
+
+  // Filtrar favoritos
+  if (tab === "fav") {
+    resultados = resultados.filter(h => F.has(h.n));
+  }
+
+  // Filtrar recientes
+  if (tab === "rec") {
+    resultados = R.map(byN).filter(Boolean);
+  }
+
+  const consulta = q.trim();
+  const termino = norm(consulta);
+
+  if (termino) {
+    const palabras = termino.split(/\s+/).filter(Boolean);
+
+    resultados = resultados.filter(h => {
+      const datos = searchData(h);
+
+      // Búsqueda directa por número
+      if (/^\d+$/.test(termino)) {
+        if (
+          datos.numero === termino ||
+          datos.numero.startsWith(termino)
+        ) {
+          return true;
+        }
+      }
+
+      // Búsqueda por palabras en Ngäbere o Español
+      return palabras.every(palabra =>
+        datos.texto.includes(palabra)
+      );
+    });
+
+    // Ordenar dando prioridad a coincidencias exactas
+    resultados.sort((a, b) => {
+      const A = searchData(a);
+      const B = searchData(b);
+
+      const exactoA = A.numero === termino ? 1 : 0;
+      const exactoB = B.numero === termino ? 1 : 0;
+
+      if (exactoA !== exactoB) {
+        return exactoB - exactoA;
+      }
+
+      const inicioA =
+        A.texto.startsWith(termino) ? 1 : 0;
+
+      const inicioB =
+        B.texto.startsWith(termino) ? 1 : 0;
+
+      return inicioB - inicioA;
+    });
+
+  } else if (tab === "abc") {
+
+    // Orden alfabético por nombre Ngäbere
+    resultados.sort((a, b) =>
+      norm(ngabereTitle(a)).localeCompare(
+        norm(ngabereTitle(b))
+      )
+    );
+
+  } else if (tab !== "rec") {
+
+    // Orden numérico
+    resultados.sort((a, b) => {
+      const na = Number(a.n);
+      const nb = Number(b.n);
+
+      if (Number.isFinite(na) && Number.isFinite(nb)) {
+        return na - nb;
+      }
+
+      return String(a.n).localeCompare(String(b.n));
+    });
+  }
+
+  return resultados;
+}
   let a=[...H];
   if(tab==='fav')a=a.filter(h=>F.has(h.n));
   if(tab==='rec')a=R.map(byN).filter(Boolean);
@@ -70,9 +219,11 @@ function home(){
   cur=null;edit=null;V='home';
   $('#app').innerHTML=`<header><div class="logo"><img alt="" width="36" height="36" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%237a1f2b'/%3E%3Cpath d='M256 230C210 200 140 198 96 216V400C140 382 210 384 256 414C302 384 372 382 416 400V216C372 198 302 200 256 230Z' fill='%23f6f3ec'/%3E%3Cpath d='M256 230V414' stroke='%237a1f2b' stroke-width='10'/%3E%3Cpath d='M256 78V178M218 114H294' stroke='%23e0a458' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E" style="border-radius:8px"><h1>Ka Ngäbere${ADMIN?'<span class="tag">ADMIN</span>':''}</h1></div>
   <div style="display:flex;gap:6px"><button id="th" aria-label="Tema">◐</button>${ADMIN?'<button id="adm">⚙ Admin</button>':''}</div></header>
-  <input id="q" type="search" inputmode="search" placeholder="Número o título del himno…" value="${esc(q)}" autocomplete="off">
+  <input id="q" type="search" inputmode="search" placeholder="Buscar por número, nombre Ngäbere o Español..." value="${esc(q)}" autocomplete="off">
   <nav>${[['all','Números'],['abc','A–Z'],['fav','★ Favoritos'],['rec','Recientes']].map(([k,l])=>`<button data-t="${k}" class="${tab===k?'on':''}">${l}</button>`).join('')}</nav>
-  <div id="ls"></div>`;
+  "<div id="searchhint">
+  Encuentra tus himnos en Ngäbere o Español. También puedes buscar por número.
+</div>;
   $('#q').oninput=e=>{q=e.target.value;fill()};
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;home();$('#q').focus()});
   $('#th').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';save();applyS()};
@@ -80,9 +231,65 @@ function home(){
   fill();
 }
 function fill(){
-  const a=list();
-  $('#ls').innerHTML=a.length?a.slice(0,400).map(h=>`<div class="item" data-n="${esc(h.n)}"><b>${esc(h.n)}</b><div style="flex:1">${esc(h.t)}${h.demo?'<span class="tag">PRUEBA</span>':''}</div>${F.has(h.n)?'<span>★</span>':''}</div>`).join('')+(a.length>400?'<p class="mu">Se muestran 400 resultados; afine la búsqueda.</p>':''):'<p class="mu">Sin resultados.</p>';
-  document.querySelectorAll('.item').forEach(e=>e.onclick=()=>read(e.dataset.n));
+function fill() {
+  const resultados = list();
+
+  $('#resultcount').textContent = q.trim()
+    ? `${resultados.length} resultado${resultados.length === 1 ? '' : 's'} para «${q.trim()}»`
+    : `${resultados.length} himnos`;
+
+  $('#ls').innerHTML = resultados.length
+    ? resultados.slice(0, 400).map(h => {
+
+        const datos = searchData(h);
+        const es = datos.espanol;
+        const titulo = datos.ngabere;
+        const info = String(h.i || '').trim();
+
+        return `
+          <div class="item" data-n="${esc(h.n)}">
+
+            <b>${esc(h.n)}</b>
+
+            <div class="songtext">
+
+              <div class="songtitle">
+                ${esc(titulo)}
+                ${h.demo ? '<span class="tag">PRUEBA</span>' : ''}
+              </div>
+
+              ${es ? `
+                <div class="songspanish">
+                  Español: ${esc(es)}
+                </div>
+              ` : ''}
+
+              ${info ? `
+                <div class="songinfo">
+                  ♫ ${esc(info)}
+                </div>
+              ` : ''}
+
+            </div>
+
+            ${F.has(h.n) ? '<span>★</span>' : ''}
+
+            <span class="mu">›</span>
+
+          </div>
+        `;
+      }).join('')
+
+      + (resultados.length > 400
+        ? '<p class="mu">Se muestran 400 resultados. Afine la búsqueda.</p>'
+        : '')
+
+    : '<p class="mu">No encontramos himnos. Prueba con su número, título Ngäbere o nombre en español.</p>';
+
+  // Abrir el himno seleccionado
+  document.querySelectorAll('.item').forEach(element => {
+    element.onclick = () => read(element.dataset.n);
+  });
 }
 function read(n){
   const h=byN(n);if(!h)return home();cur=h;V='read';
