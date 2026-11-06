@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ngb">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#7a1f2b">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ka Ngäbere</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%237a1f2b'/%3E%3Cpath d='M256 230C210 200 140 198 96 216V400C140 382 210 384 256 414C302 384 372 382 416 400V216C372 198 302 200 256 230Z' fill='%23f6f3ec'/%3E%3Cpath d='M256 230V414' stroke='%237a1f2b' stroke-width='10'/%3E%3Cpath d='M256 78V178M218 114H294' stroke='%23e0a458' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f6f3ec;--sf:#fff;--tx:#1f2a37;--mu:#6b7280;--ac:#7a1f2b;--bd:#ddd6c8;--fs:22px;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--sf:#1e2127;--tx:#ece8df;--mu:#9aa0aa;--ac:#e0a458;--bd:#2d323a}}
+:root[data-theme="dark"]{--bg:#14161a;--sf:#1e2127;--tx:#ece8df;--mu:#9aa0aa;--ac:#e0a458;--bd:#2d323a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{max-width:900px;margin:0 auto;padding:12px}
+h1{font-size:1.3rem;margin:0}header{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px}
+.logo{display:flex;align-items:center;gap:8px}.logo span{font-size:1.7rem}
+button,.btn{font:inherit;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:12px 16px;min-height:48px;cursor:pointer}
+button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+button.on{border-color:var(--ac);color:var(--ac);font-weight:600}
+input,textarea{font:inherit;width:100%;background:var(--sf);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:12px}
+#q{font-size:1.2rem;padding:16px;border:2px solid var(--ac)}
+nav{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}nav button{flex:1;min-width:90px}
+.item{display:flex;gap:12px;align-items:center;padding:14px;background:var(--sf);border:1px solid var(--bd);border-radius:12px;margin-bottom:8px;cursor:pointer}
+.item b{min-width:3.2rem;color:var(--ac);font-size:1.15rem}.mu{color:var(--mu);font-size:.9rem}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.bar>*{flex:1}
+.stz{white-space:pre-wrap;font-size:var(--fs);line-height:1.5;margin:0 0 1.2em}
+.cor{border-left:4px solid var(--ac);padding-left:14px;font-style:italic}
+.tag{display:inline-block;background:var(--ac);color:var(--bg);border-radius:6px;padding:1px 6px;font-size:.75rem;margin-left:6px}
+label{display:block;margin:10px 0 4px;color:var(--mu);font-size:.9rem}
+#pres{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:5vh 6vw;user-select:none}
+#pres .t{white-space:pre-wrap;line-height:1.35;font-weight:600;max-width:100%;overflow-wrap:anywhere}
+#pres .k{opacity:.6;margin-bottom:1rem}
+#pc{position:fixed;left:0;right:0;top:0;display:none;gap:8px;flex-wrap:wrap;padding:10px;background:#000c;color:#fff;z-index:10;align-items:center}
+#pc button,#pc input{min-height:44px;width:auto;padding:8px 12px}
+#pc input[type=color]{padding:2px;width:48px}
+#gear{position:fixed;right:8px;top:8px;z-index:11;opacity:.35;background:#0008;color:#fff;border:0;border-radius:50%;width:48px;height:48px;padding:0;display:none}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="pres"></div><div id="pc"></div><button id="gear" aria-label="Ajustes">⚙</button>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Solo para buscar: se ignoran tildes/diéresis. El texto original nunca se modifica.
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+const ld=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const ADMIN=true;
+const HIMNOS=[{"n": 1, "t": "Ti Dänkien kri", "v": ["Ti Dänkien KriTi Dänkien kri, makwe kä käin dätebare.\nMuke kabre, makwe sribebare.\nMakwe ñänä mikani trä ngitiekä.\nKä ngö käinta tä ma mike täte.", "Kira makwe kä ngwitärä mikani,\nJi rue tibien amne kri blü tuäre.\nMata nukwä mike kantare nuäre.\nÑö kri tä neen, tä ma mie kri Ngöbö.", "Ngöbö mata ngäbe jökrä tarere.\nMakwe ma ngobo itibe juani.\nJesu nükani ni miketa deme,\nKrusobtä käin krütani ni kräke.", "Köbö mrä ‘ngwane ti näin Ngöbö känti.\nTikwe nünandi kärekäre ben.\nTikwe ma käikitaikä ma ngwärekri,\nMa dite kri, ma ti tarekä kuin."], "c": "<<coro>>\nKä nuäre tibtä, tita niere mae,\nMa bäri kri, ma bäri kri.\nKä nuäre tibtä, tita niere mae,\nTi Dänkien kuin, ma bäri kri.", "i": "si ♭ (Capo 1-la)/Do, [¡Cuán grande es él!]"}, {"n": 2, "t": "Ari Ngöbö käikitekä", "v": ["Ngöbö bäri kri,\nJändrän jökrä bti ta.\nMakwe Jesu mikani\nNi Diantarikä.", "Jesu bäri kuin.\nMakwe nun tare kri.\nMa kä käinbti nükani\nKä tibien nebtä.", "Ngöbö Üai Deme,\nMata nüne nunbtä,\nKä jäme kri Ngöbö kwe,\nYe mike nunbtä.", "Ngöbö mike kri,\nNgöbö Ngobo kwe ben,\nNgöbö Üaibe arato,\nNi die mikadi kwe"], "c": "<<Coro>>\n Ari Ngöbö käikitekä.\nNgöbö bäri kuin.\nAri Ngöbö kri demaine.\nNgöbö ni Dänkien.", "i": "Fa (Capo 1-Mi) [(Te loamos, oh Dios)]"}, {"n": 3, "t": "Ngöbö Kri Kä Käinbti", "v": ["1. Ngöbö kri kä käinbti, mabe bäri deme.\nKä ngwen dekä dekä, nunta ma mike kri.\nMabe bäri deme, nunta ma demaine,\nNgöbö: ni Rün, Jesu, Üai Deme.", "2. Ngöbö kri kä käinbti, nunta ma tarere.\nJändrän jökrä nunkwe, nunta mike gare mae.\nMabe käikitadikä nunkwe kärekäre.\nMabe tä nüne, krüte ñakare.", "3. Ngöbö kri kä käinbti, mabe bä nuäre.\nMa aibe tä nüne trä ngwen nuäre te.\nNgöbö tärä itibe, akwa tärä ni mä.\nNgöbö nimä nita ma mike kri.", "4. Ngöbö kri kä käinbti, mabe bäri deme.\nJändrän jire jökrä ma käi demaindi kri.\nMabe deme metre, ni mda ñakare,\nNgöbö: ni Rün, Jesu, Üai Deme."], "c": "", "i": "Re/Mi♭ (¡Santo! ¡Santo! ¡Santo!)"}, {"n": 4, "t": "Ngöbö Aibe Di Kri", "v": ["Ngöbö aibe di kri. Ti töi kwitata kwe.\nTi bäri ngite kri, dianinkä tibtä kwe.Kä nuäre kri tibtä. Tita näin Jesube,\nTi töi kwitanina kuin deme kwe."], "c": "", "i": "[sólo el poder de Dios]"}, {"n": 5, "t": "Aleluya", "v": ["1. Aleluya, aleluya, aleluya, aleluya,\nAleluya, aleluya, aleluya, aleluya.\nAleluya, aleluya, aleluya, aleluya,\nAleluya, aleluya, aleluya, aleluya.", "2. Ngöbö tita ma tarere, Ngöbö tita ma tarere.\nNgöbö tita ma tarere, tita ma tarere kri.\nNgöbö tita ma tarere, Ngöbö tita ma tarere.\nNgöbö tita ma tarere, tita ma tarere kri.", "3. Ti Rün mata ti ngibiare, ti Rün mata ti ngibiare.\nTi Rün mata ti ngibiare, ti Rün mata ti ngibiare.\nTi Rün mata ti ngibiare, ti Rün mata ti ngibiare.\nTi Rün mata ti ngibiare, mata ti ngibiare kuin.", "4. Käre mata nüne tibtä, käre mata nüne tibtä.\nKäre mata nüne tibtä, käre mata nüne tibtä.\nKäre mata nüne tibtä, käre mata nüne tibtä.\nKäre mata nüne tibtä, Ngöbö mata nüne tibtä."], "c": "", "i": ""}, {"n": 6, "t": "Jändrän tuen tie", "v": ["Jändrän Tuen Nie", "1. Jändrän tuen nie dätebare Ngöbö kwe.\nJändrän kä temen nebtä dätebare kwe.\nNi amne jändrän se abko jökrä kwe.\nMuke kabre käinta se abko sribi kwe.", "2. Ngöbö kwe Adan dätebare ja kwrere.\nAbti meri dätebare kräke kwe.\nYebti mikani nüne Edente kwe,\nNünandre kwe Ngöbökrä abkokäre.", "3. Käre kä näm'ne bäri nuäre Edente.\nKä nämne nuäre btätre näin Ngöböbe.\nNiaratre näm'ne ja gete Ngöböbe,\nNgöbö kukwe näm'ne ruen nuäre ietre."], "c": "Kä trä raba ngwen niebare Ngöbö kwe,\nYe btäräbe kä trä namani ngwen.\nMtare Jesu ni diantarikä,\nTä kä trä kuin bien ja moto kuinbti.", "i": "Mi m ([La creación])"}, {"n": 7, "t": "Ari Ngöbö Ni Dätekä Käikitekä", "v": ["Ari Ngöbö ni Dätekä käikitekä.\nNgöbö abra bäri kri.\nAri Ngöbö ni tarekä kri demaine,\nNi ngite dianinkä kwe.\nNi jökrä tädre Ngöbö demaine,\nTädre ka niere Ngöbö mikakrä kri.\nTi mräkä ari ka niere tibe,\nNukwäta kare nuäre ye kwrere."], "c": "", "i": "Demos gracias al Señor"}, {"n": 8, "t": "Ti Rün", "v": ["1. Ti Rün tita nüne ma ye aibe kräke.\nMa tare kri tikwe.", "2. Jesu tita nüne ma ye aibe kräke.\nMa tare kri tikwe.", "3. Ngöbö Üai tita nüne ma ye aibe kräke.\nMa tare kri tikwe."], "c": "", "i": "Padre, te adoro"}, {"n": 9, "t": "Kä Nibi Nuäre", "v": ["1. Kä nibi nuäre, kä nibi jäme.\nJesu nüke kä tibienbtä.\nNgäbe nianinte Jesu tä känene,\nKäta nuäre, käta nuäre nunbtä kri.", "2. Kä nibi nuäre, kä nibi jäme.\nJesu nüke kä tibienbtä.\nAngele kä käinbtä kare nuäre Ngöbökrä.\nKäta nuäre, käta nuäre nunbtä kri.", "3. Kä nibi nuäre, kä nibi jäme.\nJesu nüke kä tibienbtä.\nGobran kri kä käinbti, makwe nun mia nuäre.\nKäta nuäre, käta nuäre nunbtä kri."], "c": "", "i": "Mi ♭ (Capo 1- Re) [¡Oh, santísimo, felicísimo!]"}, {"n": 10, "t": "Ni Obeja Ngibiabtikä", "v": ["1. Ni obeja ngibiabtikä,\nRüe kraire kä ikote tä.\nAngele kä käinbti kare,\nTä Ngöbö kri käikitekä:\nMun ngibiabtikä, mun jakwre jötrö\nJesu käikitekä, Jesu käikitekä\nJuta Belente, juta Belente.", "2. Nitre näm'ne nüne mente,\nTö namani Jesu mikai kri.\nNükani oro, mira ngwena,\nYe biani kwetre Jesuye.\nMun ütiäte kri, mun jakwre jötrö\nJesu käikitekä, Jesu käikitekä\nJuta Belente, juta Belente.", "3. Köbö ne nuäre krübäte\nJa mikakrä bobre Jesubtä.\nMun rabadi nuäre käre,\nNgöbö miaka täte jökrä.\nMun jakwre jötrö, Jesu miakrä kri.\nJesu käikitekä, Jesu käikitekä\nJuta Belente, juta Belente."], "c": "", "i": "Mi m, [En la noche los pastores]"}, {"n": 11, "t": "*Angele Tä Kare Nuäre*", "v": ["1. Angele tä kare nuäre: Ari Ngöbö mike kri.\nKä jäme bianta Ngöbö kwe,\nNi kä nebtä jökrä krä.\nNun tö Ngöbö mikai kri jae.\nDänkien nunkwe nüne käre.\nAri Ngöbö mike kri,\nNi kä käinbti ben gwaire.\nAri Ngöbö mike kri, ni kä käinbti jökrä ben.", "2. Ni Dänkien nükani nete, niara abra Ngöbö Odei.\nNükani ni tiketeta, diablu käme kisete.\nJesubra ni Diantarikä näm'ne nüne ngäbe bentre.\nNiara ngörä deme kuin, kä kwe ara Emanuel.\nAri Ngöbö mike kri, ni kä käinbti jökrä ben.", "3. Ni Dänkien nünandi käre. Jesu ni Diantarikä.\nKä tibienbtä ma nükani, ni miketa nire era.\nMakwe kä jakwe mianinte.\nMakwe ja bianina nunkrä.\nMa ngatani krusobtä, nun rabadre Ngöbö kwe.\nAri Ngöbö mike kri, ni kä käinbti jökrä ben."], "c": "", "i": "Fa (Capo 1-Mi), [Oíd un son en alta esfera]"}, {"n": 12, "t": "Kä Iko Kuin", "v": ["1. Kä iko kuin, kä jäme kuin.\nNgäbe jökrä tä kibien.\nMuke kä käinbti trä ngitiekä kri.\nMonso Jesu tä kibien mikäbti.\nJesu kä jäme bien nunye.\nJesu ma Ngöbö Odei.", "2. Kä iko kuin, kä jäme kuin.\nAngele tä Ngöbö mie kri.\nNgöbö kä jäme kwe bien ngäbeye.\nNgöbö kri dite tä nüne ni ben.\nJesu ni Diantarikä,\nJesu ni Diantarikä.", "3. Kä iko kuin, kä jäme kuin.\nJesu ma Ngöbö Odei.\nMakwe ni jökrä tare kri era.\nÑotra Ngöbö kwe tä nüne nibe.\nJesu ma Ngöbö Odei,\nJesu ma Ngöbö Odei."], "c": "", "i": "Si ♭ (Capo 1-La), [Noche de paz, noche de amor]"}, {"n": 13, "t": "Ma Nämane Gobrane", "v": ["1. Ma nämane gobrane kä käinbti Ngöböbe.\nMa jatani nüne kä nebtä,\nKä ñan biani nünankrä ngäbekwe nete mae,\nÑan tö namani ma kain ngäbti.", "2. Angeletre kä käinbti tä ma demaine kri.\nTätre ma käi ngwen nuäre jabtä,\nAkwa ni kä nebtä ngätäite ma nükani,\nMa ñan miani ütiäte kwe jae.", "3. Jändrän jökrä kwe kä tärä nünankrä kuin,\nAmne nukwä juda tärä kwe.\nAkwa ma abko ie kä ñan kwani nünankrä.\nMakwe ja tare nikani kri.", "4. Ma nükani kä nebtä nun miakäreta kuin,\nNun ngite diankakäre nunbtä.\nAkwa ni käme käkwe ma müre ketani,\nAkwa ma nükaninta nire.", "5. Kä käinta käkwe kä ngwiandi nuäre kri jabtä.\nMa jataita angeletre ben,\nYe angwane makwe ti kärädi ja känti,\nKä tärä tikrä, makwe niedi tie."], "c": "Jesukristo jakwe nüne tibtä.\nTibtä kä tärä nünankrä mae.\nJesukristo jakwe nüne tibtä.\nTibtä kä tärä nünankrä mae.", "i": "Fa (Capo 1-Mi) [Tú dejaste tu trono]"}, {"n": 14, "t": "Ma Nena Ti Dänkiene Kri", "v": ["1. Ma nena ti dänkiene kri, ma bäri kri Jesu.\nKäre makwe ti di mika, ma ngatani tikrä.", "2. Tita tödeke Jesubti, nükaninta nire.\nAngele deme Ngöbö kwe käkwe ngibiaba kuin.", "3. Ma tarebare Mariakwe, ye bä mikani kwe.\nYe kwrere ti tö nünai kuin makrä Dänkien Jesu.", "4. Jesu makwe ti di mika, sribi makwe kräke.\nKä nuäre tibta ti Dänkien, makwe ti tare kri."], "c": "Makwe ja tare nikani, ngitio Gesemani känti.\nMa nämne ti tarere kri. Jesu ti di mike.", "i": "[Cristo hazme ver tu cruz]"}, {"n": 15, "t": "Nikira, Nikira", "v": ["Nikira, nikira, nikira,\nTribe jökrä ti üaibtä nikira.\nNikira, nikira, nikira,\nTribe jökrä ti üaibtä nikira.", "Jesukwe dianinkä, därie näkäninkä.\nAleluya, nikira, nikira, nikira,\nTribe jökrä ti üaibtä nikira."], "c": "", "i": "[Ya se fue]"}, {"n": 16, "t": "Jesukristo Rükadita", "v": ["1. Jesukristo rükadita, tita ngibiare ngäbti.\nJesukristo rükadita, tita ngibiare ngäbti.\nSribi tare krütadira, tikwe nünandi jäme.\nJesu rükadita, ti näin nüne kä käinbti ben.\nJesu rükadita, ti näin nüne kä käinbti ben.", "2. Käre ni kwati kä nebtä, tä ti mike ngwarbe jae.\nTikwe ñan nünai kä nebtä, ti näin nüne Jesu ben.\nJesu rükadi ti tuenta, ti mikaita nire kwe.\nTi näin Jesu känti, ti rabadi kärekäre ben.\nTi näin Jesu känti, ti rabadi kärekäre ben.", "3. Ti tö näin nüne kä käinbti, kä rabai nuäre tibtä.\nTi Dänkien Jesu känti, tikwe nünai bäri kuin.\nTi ñan rabadi ulire, tikwe ñan ja müadre mda.\nNitre kä käinbtibe, tikwe Jesu demaindi kri.\nNitre kä käinbtibe, tikwe Jesu demaindi kri."], "c": "", "i": "[Yo sólo espero ese día]"}, {"n": 17, "t": "Jesukristo Rükadita Mütabti", "v": ["1. Jesukristo rükadita mütabti kä käinbti.\nNitre Jesu miaka täte käkwe Jesu miadi kri.\n¡Aleluya, aleluya! Jesu abra gobran kri.", "2. Ni jökräkwe Jesu tuadi, Jesu abra gobran kri.\nNi kämekwe kämikani, metani krusobtä kwe.\nTä ulire kri krübäte, kärekäre müadi kwe.", "3. Jesu träin ye tuadi nikwe, niara jataita angwane,\nJesukwe rüe ye ganaindi, ja kukwei aibe diebti.\nKä rabadi nuäre nibtä Jesu tuare nüketa.", "4. Ni tä Ngöbö käikitekä, Jesu bäri kri era.\nJesu ma nun Diantarikä, makwe gobrandi käre.\n¡Aleluya, aleluya! Jesu tä gobrane kuin."], "c": "", "i": "[Con las nubes viene Cristo]"}, {"n": 18, "t": "Kä Mrä Ngwane Jesu Rükaita", "v": ["1. Kä mrä ngwane Jesu rükaita bobukäre kä nebtä.\nDrü kä käinbti kukwei jradi nete nie.\nNi Ngöbö kwe ükadi krö ja ngwäre kri Jesukwe,\nYe ngätäite ti rabadi siba ben.", "2. Jesu miaka täte kwati krütanina mekera,\nAkwa rükadita nire bobuta.\nNitre yebtä kä rabai nuäre nüne Jesube,\nYe ngätäite ti rabadi siba ben.", "3. Ari kä ngwen nuäre jabtä nünakäre Jesukrä.\nNi tä nüne kä temenbtä angwane,\nJesu rükadita näire, ni kwe tädi jökrä ben,\nYe ngätäite ti rabadi siba ben."], "c": "Ngöbö kwe ni kwe kärädi,\nNgöbö kwe ni kwe kärädi,\nNgöbö kwe ni kwe kärädi,\nTita nete, tikwe niedi Ngöböye.", "i": "La ♭ (Capo 1-Sol), [Cuando anuncie el arcángel]"}, {"n": 19, "t": "Jesu Rükai Kä Nebtä", "v": ["1. Jesu rükai kä nebtä angwane,\nNi kwebtä kä rabadi nuäre kri.\nNi kwati rükadi niara ngwäre kri,\nNi Dänkien Jesu kakäre ngäbti.", "2. Ni Dänkien Jesukristo rükadita,\nNita biare niara ngibiare ngäbti,\nAbko erere käi rabadi nuäre nibtä,\nNikwe ni Dänkien käikitaikä kri.", "3. Ni Ngöbö mikaka täte era metre,\nAmne Ngöbö Kukwei diriekä metre ta,\nNi kwati käkwe Jesu kani ngäbti,\nYe rabai nüne käre Jesu ben."], "c": "Ñänä ngire ñan rabai,\nJesu abra ñotra kri.\nTare nika ñan rabai,\nNi ulire ñan rabai,\nNgäbe käme ñan rabai,\nNi ngökaka ñan rabai,\nJesu abra gobranka kri kä käinbti\nKäkwe kä nuäre biandi käre nie.", "i": "Do, [¡Cuán glorioso será la mañana!]"}, {"n": 20, "t": "Ju Kri Kuin Tä Tikwe", "v": ["1. Ju kri kuin tä tikwe kä käinbti sete.\nJu kri kuin tä tikwe kä käinbti sete.\nJu kri kuin tä tikwe kä käinbti sete.\nNgöbö känti käin.", "2. Ti näin nüne kärekäre Dänkin Jesube.\nTi näin nüne kärekäre Dänkin Jesube.\nTi näin nüne kärekäre Dänkin Jesube.\nNgöbö känti käin.", "3. Mun tö nünai Ngöböbe, mun jata Jesuye.\nMun tö nünai Ngöböbe, mun jata Jesuye.\nMun tö nünai Ngöböbe, mun jata Jesuye.\nNgöbö känti käin."], "c": "", "i": ""}, {"n": 21, "t": "Ma Tö Näin Kä Käinbti", "v": ["1. Ma tö näin kä käinbti, ma ñan rikai rute.\nMa ñan raba nikenkä nukwä kwrere käin.\nMa tö näin kä käinbti, ma ñan rikai rute.\nMa ñan raba nikenkä nukwä kwrere käin.", "2. Akwa Jesu käkwe ja därie bianina,\nYe aibe köböire ma näin kä käinbti.\nAkwa Jesu käkwe ja därie bianina,\nYe aibe köböire ma näin kä käinbti."], "c": "", "i": "Para ir al cielo"}, {"n": 22, "t": "Tita Jesu Tarere Kri", "v": ["1. Tita Jesu tarere kri,\nTi dianintari kwe.\nJa därie biani tikrä kwe,\nJa Üai bianina kwe tie.\nTita ulire angwane,\nKä nuäre kwe bianta kwe tie.\nJesu aibe ti mräkä kuin, Ngöbö kri.", "2. Tita Jesu tarere kri,\nTi ütiä biani kwe,\nTi kökaninta Jesukwe,\nKä jäme biani kwe tie.\nTikwe gobrandi Jesube,\nKä nuäre känti kä käinbti.\nTikwe nünandi kä käinbti Jesube.", "3. Tita Jesu tarere kri,\nTita tödeke bti,\nTi näin kä käinbti Jesube,\nYe käi nuäre tibtä,\nJesuta ti ngibiare kuin.\nDibire rare tä tibe.\nTikwe nünandi kä käinbti Jesube.", "4. Tita Jesu tarere kri,\nTi tikaninte kwe.\nTi näm'ne ja mie ngite kri,\nTi dianintari kwe.\nJesuta ñotrare tikwe.\nTikwe gobrandi Jesube,\nKä bäri kuin, te ti tö näin Jesube."], "c": "", "i": "Sol, [Cristo es mi dulce Salvador]"}, {"n": 23, "t": "Jesukwe Ti Dianinkä", "v": ["1. Jesukwe ti dianinkä.\nJesu ti ngibiaka kuin.\nTi näin ben, ti näin ben.\nJesukwe ti tare kri.\nTi rüe käme, ganaibare kwe,\nJa däriebti krusobtä.\nJesukwe ti dianinkä.\nTi tö näin kä ngwente ben.", "2. Ni Dänkien ye krütani,\nJa tare nikani kwe.\nNi ngite ye ütiä\nbiani jökrä kwe nikrä.\nDiablu di kri ganaibare kwe,\nJa däriebti krusobtä.\nJesuta ni tarere,\nAri mie täte era."], "c": "", "i": "[Salvo soy, salvo soy]"}, {"n": 24, "t": "Jesubra Ti Diantarikä", "v": ["Jesubra ti Diantarikä.\nTi ngite dianinkä kwe.\nJa Üai kuin biani kwe tie.\nTi tö kuin niereta Jesuye."], "c": "", "i": "[Gracias Dios por la salvación]"}, {"n": 25, "t": "Ni Kukwe Muko Kä Kristo", "v": ["1. Ni kukwe muko kä Kristo.\nNita nüne jäme ben.\nKristokwe ni tarebare,\nJa Üai biani nikrä kwe.\nKä jäme ñakare nibtä,\nNiarakwe biandi nie,\nJesukwe ni die mikadi,\nAri blite Jesube.", "2. ¿Kä ñakare juto mabtä?\nKukwe tare ma känti,\nJesukwe ma die mikadi,\nMakwe blita jakrä ben.\nNi mda ñan tö ja tuai mabe,\nJakwe niere Jesuye,\nJesukwe ma die mikadi,\nMa moto miai jäme kwe.", "3. Jesu ni tarekä metre,\nYe bä miani tuadre kwe.\nKrusobtä krütani nikrä,\nNi ngite dianinkä kwe.\nMakwe ja mikani ngite,\nNi ngie nuani Jesukwe.\nKäre tö ja getai nibe,\nNikwe tödekadre bti."], "c": "", "i": "Fa 8Capo 1-Mi), ¡Oh, qué Amigo nos es Cristo!"}];
+const NA=!!window.AndroidBridge;
+let V='home';
+let H=ADMIN?(ld('h',null)||HIMNOS):HIMNOS, F=new Set(ld('f',[])), R=ld('r',[]), S=ld('s',{fs:22,theme:'auto'});
+let tab='all', q='', cur=null, edit=null;
+const save=()=>{if(ADMIN)sv('h',H);sv('f',[...F]);sv('r',R);sv('s',S)};
+const applyS=()=>{const r=document.documentElement;r.style.setProperty('--fs',S.fs+'px');S.theme==='auto'?r.removeAttribute('data-theme'):r.setAttribute('data-theme',S.theme)};
+const byN=n=>H.find(h=>h.n==n);
+function list(){
+  let a=[...H];
+  if(tab==='fav')a=a.filter(h=>F.has(h.n));
+  if(tab==='rec')a=R.map(byN).filter(Boolean);
+  const s=norm(q.trim());
+  if(s){a=a.filter(h=>String(h.n)===s||String(h.n).startsWith(s)&&/^\d+$/.test(s)||norm(h.t).includes(s));
+    a.sort((x,y)=>(String(y.n)===s)-(String(x.n)===s))}
+  else if(tab==='abc')a.sort((x,y)=>norm(x.t).localeCompare(norm(y.t)));
+  else if(tab!=='rec')a.sort((x,y)=>x.n-y.n);
+  return a;
+}
+function home(){
+  cur=null;edit=null;V='home';
+  $('#app').innerHTML=`<header><div class="logo"><img alt="" width="36" height="36" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%237a1f2b'/%3E%3Cpath d='M256 230C210 200 140 198 96 216V400C140 382 210 384 256 414C302 384 372 382 416 400V216C372 198 302 200 256 230Z' fill='%23f6f3ec'/%3E%3Cpath d='M256 230V414' stroke='%237a1f2b' stroke-width='10'/%3E%3Cpath d='M256 78V178M218 114H294' stroke='%23e0a458' stroke-width='18' stroke-linecap='round'/%3E%3C/svg%3E" style="border-radius:8px"><h1>Ka Ngäbere${ADMIN?'<span class="tag">ADMIN</span>':''}</h1></div>
+  <div style="display:flex;gap:6px"><button id="th" aria-label="Tema">◐</button>${ADMIN?'<button id="adm">⚙ Admin</button>':''}</div></header>
+  <input id="q" type="search" inputmode="search" placeholder="Número o título del himno…" value="${esc(q)}" autocomplete="off">
+  <nav>${[['all','Números'],['abc','A–Z'],['fav','★ Favoritos'],['rec','Recientes']].map(([k,l])=>`<button data-t="${k}" class="${tab===k?'on':''}">${l}</button>`).join('')}</nav>
+  <div id="ls"></div>`;
+  $('#q').oninput=e=>{q=e.target.value;fill()};
+  document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;home();$('#q').focus()});
+  $('#th').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';save();applyS()};
+  if(ADMIN)$('#adm').onclick=admin;
+  fill();
+}
+function fill(){
+  const a=list();
+  $('#ls').innerHTML=a.length?a.slice(0,400).map(h=>`<div class="item" data-n="${esc(h.n)}"><b>${esc(h.n)}</b><div style="flex:1">${esc(h.t)}${h.demo?'<span class="tag">PRUEBA</span>':''}</div>${F.has(h.n)?'<span>★</span>':''}</div>`).join('')+(a.length>400?'<p class="mu">Se muestran 400 resultados; afine la búsqueda.</p>':''):'<p class="mu">Sin resultados.</p>';
+  document.querySelectorAll('.item').forEach(e=>e.onclick=()=>read(e.dataset.n));
+}
+function read(n){
+  const h=byN(n);if(!h)return home();cur=h;V='read';
+  R=[h.n,...R.filter(x=>x!=h.n)].slice(0,30);save();
+  const all=[...H].sort((a,b)=>a.n-b.n),i=all.findIndex(x=>x.n==h.n);
+  $('#app').innerHTML=`<div class="bar"><button id="bk">← Volver</button><button id="fv" class="${F.has(h.n)?'on':''}">${F.has(h.n)?'★ Favorito':'☆ Favorito'}</button><button id="pr" class="p">▶ Presentar</button></div>
+  <div class="bar"><button id="fm">A−</button><button id="fp">A+</button><button id="th">◐ Tema</button></div>
+  <h2><span style="color:var(--ac)">${esc(h.n)}.</span> ${esc(h.t)}${h.demo?'<span class="tag">PRUEBA</span>':''}</h2>
+  ${h.v.map(s=>`<p class="stz">${esc(s)}</p>`+(h.c?`<p class="stz cor">${esc(h.c)}</p>`:'')).join('')}
+  ${h.i?`<p class="mu">${esc(h.i)}</p>`:''}
+  <div class="bar"><button id="pv" ${i<1?'disabled':''}>← Anterior</button><button id="nx" ${i>=all.length-1?'disabled':''}>Siguiente →</button></div>`;
+  $('#bk').onclick=home;$('#pr').onclick=()=>present(h);
+  $('#fv').onclick=()=>{F.has(h.n)?F.delete(h.n):F.add(h.n);save();read(h.n)};
+  $('#fm').onclick=()=>{S.fs=Math.max(14,S.fs-2);save();applyS()};
+  $('#fp').onclick=()=>{S.fs=Math.min(60,S.fs+2);save();applyS()};
+  $('#th').onclick=()=>{S.theme=S.theme==='dark'?'light':'dark';save();applyS()};
+  $('#pv').onclick=()=>read(all[i-1].n);$('#nx').onclick=()=>read(all[i+1].n);
+}
+// ---- Presentación ----
+let P={h:null,i:0,bg:'#000000',fg:'#ffffff',sz:6,coro:true,slides:[]};
+function slides(h){
+  const a=[{k:'',t:h.n+'\n'+h.t,title:1}];
+  h.v.forEach((s,j)=>{a.push({k:`Estrofa ${j+1}/${h.v.length}`,t:s});if(h.c&&P.coro)a.push({k:'Coro',t:h.c})});
+  return a;
+}
+function present(h){P.h=h;P.i=0;P.slides=slides(h);$('#pres').style.display='flex';$('#gear').style.display='block';draw();
+  if(NA)AndroidBridge.pantalla(true);else try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen()}catch(e){}}
+function draw(){
+  const s=P.slides[P.i],p=$('#pres');
+  p.style.background=P.bg;p.style.color=P.fg;
+  p.innerHTML=`${s.k?`<div class="k" style="font-size:${P.sz*.45}vmin">${esc(P.h.n)} · ${esc(s.k)}</div>`:''}<div class="t" style="font-size:${s.title?P.sz*1.2:P.sz}vmin">${esc(s.t)}</div>`;
+}
+function go(d){const n=P.i+d;if(n>=0&&n<P.slides.length){P.i=n;draw()}}
+function closeP(){$('#pres').style.display='none';$('#pc').style.display='none';$('#gear').style.display='none';
+  if(NA)AndroidBridge.pantalla(false);else try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}}
+function ctrl(){
+  const c=$('#pc');c.style.display=c.style.display==='flex'?'none':'flex';
+  c.innerHTML=`<button id="c1">A−</button><button id="c2">A+</button>Fondo<input type="color" id="cb" value="${P.bg}">Letra<input type="color" id="cf" value="${P.fg}">
+  <label style="margin:0;color:#fff"><input type="checkbox" id="cc" ${P.coro?'checked':''} style="width:auto"> Coro tras cada estrofa</label><button id="cx">✕ Salir</button>`;
+  $('#c1').onclick=()=>{P.sz=Math.max(2,P.sz-.5);draw()};$('#c2').onclick=()=>{P.sz=Math.min(14,P.sz+.5);draw()};
+  $('#cb').oninput=e=>{P.bg=e.target.value;draw()};$('#cf').oninput=e=>{P.fg=e.target.value;draw()};
+  $('#cc').onchange=e=>{P.coro=e.target.checked;P.slides=slides(P.h);P.i=Math.min(P.i,P.slides.length-1);draw()};
+  $('#cx').onclick=closeP;
+}
+$('#gear').onclick=ctrl;
+$('#pres').onclick=e=>{const x=e.clientX/innerWidth;go(x<.35?-1:1)};
+let tx=0;$('#pres').ontouchstart=e=>{tx=e.touches[0].clientX};
+document.addEventListener('keydown',e=>{
+  if($('#pres').style.display!=='flex')return;
+  if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();go(1)}
+  else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();go(-1)}
+  else if(e.key==='Escape')closeP();
+});
+//@ADMIN-START
+// ---- Administración ----
+function admin(){
+  edit=null;V='admin';
+  $('#app').innerHTML=`<div class="bar"><button id="bk">← Volver</button><button id="ad" class="p">+ Nuevo himno</button></div>
+  <h2>Administración (${H.length} himnos)</h2>
+  <div class="bar"><button id="ex">⬇ Exportar respaldo (JSON)</button><button id="im">⬆ Importar TXT / CSV / JSON</button></div>
+  <input type="file" id="fi" accept=".txt,.csv,.json" multiple hidden>
+  <p class="mu">Formato TXT: cada himno empieza con «número | título», estrofas separadas por una línea en blanco, el coro empieza con «CORO:», y los himnos se separan con una línea «====». CSV: columnas numero, titulo, letra, coro (estrofas separadas por una línea en blanco o por ||). Importar reemplaza himnos con el mismo número. Excel (XLSX): guárdelo como CSV UTF-8 antes de importar.</p>
+  <div id="ls"></div>
+  `;
+  $('#bk').onclick=home;$('#ad').onclick=()=>form({n:Math.max(0,...H.map(h=>+h.n||0))+1,t:'',v:[''],c:'',i:''},true);
+  $('#ex').onclick=()=>{const txt=JSON.stringify(H,null,1),nm='ka-ngabere-respaldo-'+new Date().toISOString().slice(0,10)+'.json';
+    if(NA){AndroidBridge.guardar(nm,txt)}else{const b=new Blob([txt],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=nm;a.click()}};
+  $('#im').onclick=()=>$('#fi').click();$('#fi').onchange=imp;
+  const a=[...H].sort((x,y)=>x.n-y.n);
+  $('#ls').innerHTML=a.slice(0,500).map(h=>`<div class="item" data-n="${esc(h.n)}"><b>${esc(h.n)}</b><div style="flex:1">${esc(h.t)}</div><span class="mu">Editar</span></div>`).join('');
+  document.querySelectorAll('.item').forEach(e=>e.onclick=()=>form({...byN(e.dataset.n)},false));
+}
+function form(h,isNew){
+  const old=h.n;V='form';
+  $('#app').innerHTML=`<div class="bar"><button id="bk">← Cancelar</button></div><h2>${isNew?'Nuevo himno':'Editar himno'}</h2>
+  <label>Número</label><input id="fn" value="${esc(h.n)}"><label>Título</label><input id="ft" value="${esc(h.t)}">
+  <label>Estrofas (separadas por una línea en blanco)</label><textarea id="fv" rows="10">${esc(h.v.join('\n\n'))}</textarea>
+  <label>Coro (opcional)</label><textarea id="fc" rows="3">${esc(h.c)}</textarea>
+  <label>Información adicional (opcional)</label><input id="fi2" value="${esc(h.i)}">
+  <div class="bar"><button id="sv" class="p">Guardar</button>${isNew?'':'<button id="dl">Eliminar</button>'}</div>`;
+  $('#bk').onclick=admin;
+  $('#sv').onclick=()=>{
+    const n=$('#fn').value.trim(),t=$('#ft').value.trim();if(!n||!t)return alert('Número y título son obligatorios.');
+    const o={n:isNaN(n)?n:+n,t,v:$('#fv').value.split(/\n\s*\n/).map(s=>s.trim()).filter(Boolean),c:$('#fc').value.trim(),i:$('#fi2').value.trim()};
+    if(!isNew&&h.demo)o.demo=0;
+    H=H.filter(x=>x.n!=old&&x.n!=o.n);H.push(o);save();admin();
+  };
+  if(!isNew)$('#dl').onclick=()=>{if(confirm('¿Eliminar este himno?')){H=H.filter(x=>x.n!=old);F.delete(old);save();admin()}};
+}
+function csv(t){const r=[];let row=[],c='',q=false;t=t.replace(/^\uFEFF/,'');
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+    else if(ch=='"')q=true;else if(ch==','||ch==';'){row.push(c);c=''}
+    else if(ch=='\n'){row.push(c);r.push(row);row=[];c=''}else if(ch!='\r')c+=ch}
+  if(c||row.length){row.push(c);r.push(row)}return r}
+const stz=s=>String(s||'').split(/\n\s*\n|\|\|/).map(x=>x.trim()).filter(Boolean);
+async function imp(e){
+  let add=[];
+  for(const f of e.target.files){
+    const t=await f.text(),ext=f.name.split('.').pop().toLowerCase();
+    try{
+      if(ext==='json'){const j=JSON.parse(t);(Array.isArray(j)?j:[j]).forEach(h=>add.push({n:h.n??h.numero,t:h.t??h.titulo,v:h.v??stz(h.letra),c:h.c??h.coro??'',i:h.i??h.info??''}))}
+      else if(ext==='csv'){const r=csv(t);const hd=r[0].map(x=>norm(x.trim()));const ix=k=>hd.indexOf(k);
+        r.slice(1).forEach(x=>{if(x[ix('numero')])add.push({n:x[ix('numero')].trim(),t:(x[ix('titulo')]||'').trim(),v:stz(x[ix('letra')]),c:(x[ix('coro')]||'').trim(),i:''})})}
+      else t.replace(/\r/g,'').split(/^====+\s*$/m).forEach(b=>{b=b.trim();if(!b)return;
+        const m=b.match(/^(.+?)\s*[|.]\s*(.+)\n?([\s\S]*)$/);if(!m)return;
+        const v=[];let c='';stz(m[3].replace(/\n\s*\n/g,'||')).forEach(s=>/^CORO:/i.test(s)?c=s.replace(/^CORO:\s*/i,''):v.push(s));
+        add.push({n:m[1].trim(),t:m[2].trim(),v,c,i:''})})
+    }catch(err){alert('No se pudo leer '+f.name)}
+  }
+  add=add.filter(h=>h.n!==undefined&&h.n!==''&&h.t).map(h=>({...h,n:isNaN(h.n)?h.n:+h.n,v:h.v||[]}));
+  if(!add.length)return alert('No se encontraron himnos válidos.');
+  const ns=new Set(add.map(h=>String(h.n)));H=H.filter(h=>!ns.has(String(h.n))).concat(add);save();
+  alert(add.length+' himnos importados.');admin();
+}
+//@ADMIN-END
+window.atras=()=>{
+  if($('#pres').style.display==='flex'){closeP();return true}
+  if(V==='read'){home();return true}
+  if(ADMIN&&V==='form'){admin();return true}
+  if(ADMIN&&V==='admin'){home();return true}
+  return false};
+applyS();home();
+</script>
+</body>
+</html>
