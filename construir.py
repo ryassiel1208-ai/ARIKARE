@@ -29,6 +29,19 @@ SHIM="""<script>
 })();
 </script>
 """
+# Los himnos salen de himnos.json (así se corrigen en un solo lugar para las dos versiones)
+if os.path.exists('himnos.json'):
+    try:
+        himnos=json.load(open('himnos.json',encoding='utf-8'))
+        assert isinstance(himnos,list) and all(isinstance(h,dict) and 'n' in h and 't' in h and isinstance(h.get('v',[]),list) for h in himnos)
+    except json.JSONDecodeError as e:
+        print('ERROR en himnos.json: linea %d, columna %d -> %s'%(e.lineno,e.colno,e.msg));raise SystemExit(1)
+    except AssertionError:
+        print('ERROR en himnos.json: cada himno debe tener "n", "t" y "v" (lista de estrofas)');raise SystemExit(1)
+    k=html.index('const HIMNOS=')+len('const HIMNOS=')
+    _,fin=json.JSONDecoder().raw_decode(html,k)
+    html=html[:k]+json.dumps(himnos,ensure_ascii=False).replace('</','<\\/')+html[fin:]
+    print('himnos tomados de himnos.json:',len(himnos))
 assert html.count('<script>')==1
 html=html.replace('<script>',SHIM+'<script>',1)
 shutil.rmtree('www',ignore_errors=True);os.makedirs('www')
